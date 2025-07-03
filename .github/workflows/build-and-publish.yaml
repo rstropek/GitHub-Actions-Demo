@@ -1,0 +1,60 @@
+name: .NET 10 Preview CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.vscode/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 Preview
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          include-prerelease: true
+
+      - name: Restore dependencies
+        run: dotnet restore MathHelper.sln
+
+      - name: Build solution
+        run: dotnet build MathHelper.sln --no-restore --configuration Release
+
+      - name: Run tests & collect coverage
+        run: |
+          dotnet test MathHelper.Tests/MathHelper.Tests.csproj \
+            --no-build \
+            --configuration Release \
+            --logger "trx;LogFileName=TestResults.trx" \
+            --results-directory TestResults \
+            --collect:"XPlat Code Coverage"
+
+      - name: Publish Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: Test Results
+          path: TestResults/*.trx
+
+      - name: Publish Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Code Coverage
+          path: TestResults/**/coverage.cobertura.xml
+
+      - name: Publish Console App
+        run: dotnet publish MathHelper.Console/MathHelper.Console.csproj \
+              --no-build \
+              --configuration Release \
+              --output published
+
+      - name: Upload Console App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MathHelper.Console
+          path: published/**/*
