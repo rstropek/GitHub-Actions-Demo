@@ -49,10 +49,11 @@ jobs:
           path: TestResults/**/coverage.cobertura.xml
 
       - name: Publish Console App
-        run: dotnet publish MathHelper.Console/MathHelper.Console.csproj \
-              --no-build \
+        run: |
+          cd MathHelper.Console
+          dotnet publish --no-build \
               --configuration Release \
-              --output published
+              --output ../published
 
       - name: Upload Console App Artifact
         uses: actions/upload-artifact@v4
